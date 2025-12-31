@@ -28,7 +28,7 @@ def get_news_data(start_date, end_date, edaily):
                 date_text = ''
                 date_elem = item.select_one("div.author_category")
                 if date_elem:
-                    date_text = date_elem.contents[0].strip()
+                    date_text = date_elem.contents[0].strip().replace('.', '-')
                     
                 lis = item.select("ul.newsbox_texts li")
                 # 제목이랑 본문 합침
@@ -72,7 +72,7 @@ except KeyboardInterrupt: # 중간에 중지시 거기까지 저장
 print(f"\n총 {len(edaily)}건의 기사를 수집했습니다.")
 df = pd.DataFrame(edaily, columns=['date', 'full_text'])
 
-df['date_dt'] = pd.to_datetime(df['date'], format='%Y.%m.%d', errors='coerce')
+df['date_dt'] = pd.to_datetime(df['date'], format='%Y-%m-%d', errors='coerce')
 df = df.sort_values(by='date_dt', ascending=True) # 날짜 오름차순 정렬
 df = df.drop(columns=['date_dt']) # 임시로 만들었던 열 삭제
 

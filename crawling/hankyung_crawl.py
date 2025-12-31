@@ -17,7 +17,7 @@ def fetch_article(article_url):
         
         # 날짜, 제목, 본문 추출
         date_elem = soup.select_one('span.txt-date')
-        date_text = date_elem.get_text(strip=True)[:10] if date_elem else "날짜 없음" # 시분초 버리고 날짜만 추출
+        date_text = date_elem.get_text(strip=True)[:10].replace('.', '-') if date_elem else "날짜 없음" # 시분초 버리고 날짜만 추출
         
         headline = soup.select_one('h1.headline')
         title = headline.get_text(strip=True) if headline else "제목 없음" # 제목 없으면 제목 없음
@@ -66,7 +66,7 @@ except KeyboardInterrupt: # 중간에 중지시 거기까지 저장
 print(f"\n총 {len(hankyung)}건의 기사를 수집했습니다.")
 df = pd.DataFrame(hankyung, columns=['date', 'full_text'])
 
-df['date_dt'] = pd.to_datetime(df['date'], format='%Y.%m.%d', errors='coerce')
+df['date_dt'] = pd.to_datetime(df['date'], format='%Y-%m-%d', errors='coerce')
 df = df.sort_values(by='date_dt', ascending=True) # 날짜 오름차순 정렬
 df = df.drop(columns=['date_dt']) # 임시로 만들었던 열 삭제
 
