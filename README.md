@@ -3,7 +3,7 @@
 
 ---
 
-# 간단한 브랜치 관리 명령어 (브랜치 삭제는 순서대로 해야 됨)
+# 간단한 브랜치 관리 명령어 (브랜치 삭제는 순서대로)
 - git checkout -b prep/edaily_hankyung_news (prep/edaily_hankyung_news라는 브랜치 생성후 이동)
 - git branch (내 브랜치 목록 확인 가능, 현재 브랜치는 *로 표시됨)
 - git checkout 브랜치명 (브랜치 이동시 사용)
