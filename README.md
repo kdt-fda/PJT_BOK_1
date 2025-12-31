@@ -3,8 +3,12 @@
 
 ---
 
-# 간단한 github 명령어 (순서대로 해야 됨)
-- git push origin --delete 브랜치명 (원격저장소(github)에서 브랜치를 삭제) 
+# 간단한 브랜치 관리 명령어 (브랜치 삭제는 순서대로 해야 됨)
+- git checkout -b prep/edaily_hankyung_news (prep/edaily_hankyung_news라는 브랜치 생성후 이동)
+- git branch (내 브랜치 목록 확인 가능, 현재 브랜치는 *로 표시됨)
+- git checkout 브랜치명 (브랜치 이동시 사용)
+
+- git push origin --delete 브랜치명 (원격저장소(github)에서 브랜치를 삭제)
 - git fetch origin --prune (원격저장소에서 이미 삭제된 브랜치들을 내 로컬저장소에서도 깔끔하게 정리)
 - git branch -d 브랜치명 (내가 만든 브랜치를 로컬저장소에서 삭제)
 
