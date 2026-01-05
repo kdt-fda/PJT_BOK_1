@@ -1,46 +1,15 @@
 import pandas as pd
+import json
 import re
+import os
 from ekonlpy.tag import Mecab
-
+from concurrent.futures import ProcessPoolExecutor
 mecab = Mecab()
 
-df = pd.read_csv("./preprocessing/minutes_stage1.csv", encoding="utf-8-sig")
+INPUT_CSV = "minutes_filtered.csv"
+OUTPUT_CSV = "minutes_tokens.csv"
 
-# BODY만 추출
-df_body = df[df["text_type"] == "BODY"].copy()
-
-print(df_body.shape)
-print(df_body.head())
-
-df_body["text_raw"] = df_body["text"].astype(str).fillna("").str.strip()
-df_sent = (
-    df_body
-    .assign(sentence=df_body["text_raw"].astype(str).str.split("음"))
-    .explode("sentence")
-    .reset_index(drop=True)
-)
-
-df_sent["sentence"] = df_sent["sentence"].str.strip()
-df_sent = df_sent[df_sent["sentence"] != ""]
-
-# 클렌징 작업 후 csv 저장
-SAVE_PATH = "./preprocessing/minutes_filtered.csv"
-
-cols_to_save = [
-    "meeting_date",
-    "release_date",
-    "text_type",
-    "sentence"
-]
-
-df_sent[cols_to_save].to_csv(
-    SAVE_PATH,
-    index=False,
-    encoding="utf-8-sig"
-)
-
-print(df_sent[cols_to_save].head())
-
+df = pd.read_csv(INPUT_CSV)
 
 negation_words = {"않", "못", "아니"}
 
@@ -61,9 +30,36 @@ def tokenize_ekonlpy(text):
 
     return result
 
-df_sent["tokens"] = df_sent["sentence"].apply(tokenize_ekonlpy)
 
-print(df_sent[["meeting_date", "release_date", "sentence", "tokens"]].head())
+
+rows = []
+
+for _, row in df.iterrows():
+    release_date = row["release_date"]
+    sentences = json.loads(row["sentences"])  
+
+    tokenized_sentences = []
+
+    for sent in sentences:
+        tokens = tokenize_ekonlpy(sent)
+        if tokens:                              # 빈 문장 제거
+            tokenized_sentences.append(tokens)
+
+    rows.append({
+        "release_date": release_date,
+        "tokens": json.dumps(tokenized_sentences, ensure_ascii=False),
+        "source_type": "minutes"
+    })
+
+df_tokens = pd.DataFrame(rows)
+
+df_tokens.to_csv(
+    OUTPUT_CSV,
+    index=False,
+    encoding="utf-8-sig"
+)
+
+
 
 
 
