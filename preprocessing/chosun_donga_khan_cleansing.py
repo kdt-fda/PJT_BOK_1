@@ -2,41 +2,20 @@ import pandas as pd
 import re
 
 def clean_text(text):
-    if not isinstance(text, str):
-        return ''
-
-    # 줄바꿈 기호 제거
-    text = re.sub(r'\\n', ' ', text)
-
-    # 이메일 제거
+    if not isinstance(text, str): return ''
+    
+    # 줄바꿈 및 이메일/URL 제거
+    text = re.sub(r'\\n|\n|\r', ' ', text)
     text = re.sub(r'[a-zA-Z0-9\.\-\_+]+\@[a-zA-Z0-9\.\-\_\+]+\.[a-zA-Z]{2,}', ' ', text)
-
-    # URL 제거
     text = re.sub(r'http[s]?://\S+', ' ', text)
 
-    # 숫자 제거
-    text = re.sub(r'\d+(\.\d+)?', ' ', text)
+    # 특수기호 제거 (문장부호 .,?! 제외)
+    text = re.sub(r'[^가-힣a-zA-Z0-9\s.,?!]', ' ', text)
 
-    # 괄호, 따옴표, 슬래시, 쉼표, 문장부호 제거
-    text = re.sub(r'[()\[\]{}<>\"\'\\\,\.\`]', ' ', text)
-
-    # 한글 제외 문자 제거
-    text = re.sub(r'[^가-힣\s]', ' ', text)
-
-    # 기자명 제거
-    text = re.sub(r'[가-힣]{2,4}\s*기자', ' ', text)
-
-    # 불용어 제거
-    stopwords = ['무단전재', '재배포', '금지', '저작권', '지난', '최근', '대해', '위해',
-                 '통해', '이번', '요즘', '일보', '신문', '부문', '기사', '올해', '내년',
-                 '등의', '이래', '오늘', '어제', '내일', '그간', '아무런', '작년']
+    # 공백 및 마침표 정리
+    text = re.sub(r'\.+', '.', text)
+    text = re.sub(r'\s+', ' ', text).strip()
     
-    for word in stopwords:
-        text = text.replace(word, ' ')
-
-    # 공백 한 칸으로 정리
-    text = re.sub(r'\s+', ' ', text)
-
     return text
 
 # 조선일보 실행
@@ -69,7 +48,7 @@ print(f'제거된 기사(200자 미만): {before_count - after_count}건')
 print(f'최종 남은 기사 수: {after_count}건')
 
 # 최종 파일 저장
-output_path = 'cleansed_chosun_news.csv'
+output_path = 'chosun_news_filtered.csv'
 df_filtered.to_csv(output_path, index=False, encoding='utf-8-sig')
 
 # 동아일보 실행
@@ -102,7 +81,7 @@ print(f'제거된 기사(200자 미만): {before_count - after_count}건')
 print(f'최종 남은 기사 수: {after_count}건')
 
 # 최종 파일 저장
-output_path = 'cleansed_donga_news.csv'
+output_path = 'donga_news_filtered.csv'
 df_filtered.to_csv(output_path, index=False, encoding='utf-8-sig')
 
 # 경향신문 실행
@@ -135,5 +114,5 @@ print(f'제거된 기사(200자 미만): {before_count - after_count}건')
 print(f'최종 남은 기사 수: {after_count}건')
 
 # 최종 파일 저장
-output_path = 'cleansed_khan_news.csv'
+output_path = 'khan_news_filtered.csv'
 df_filtered.to_csv(output_path, index=False, encoding='utf-8-sig')
