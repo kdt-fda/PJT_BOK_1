@@ -9,6 +9,9 @@ def clean_text(text):
     text = re.sub(r'[a-zA-Z0-9\.\-\_+]+\@[a-zA-Z0-9\.\-\_\+]+\.[a-zA-Z]{2,}', ' ', text)
     text = re.sub(r'http[s]?://\S+', ' ', text)
 
+    # 기자명 제거
+    text = re.sub(r'[가-힣]{2,4}\s*기자', ' ', text)
+
     # 특수기호 제거 (문장부호 .,?! 제외)
     text = re.sub(r'[^가-힣a-zA-Z0-9\s.,?!]', ' ', text)
 
