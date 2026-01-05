@@ -113,35 +113,96 @@ while True:
 
     page += 1
 
-import pdfplumber
+
+
 import os
 import re
-import pandas as pd
+import pdfplumber
 
 PDF_DIR = "./crawling_minutes.pdf"
-OUTPUT_FILE = "../preprocessing/minutes_text.txt"
+OUTPUT_FILE = "./minutes_text.txt"
+LOG_FILE = "./minutes_extract_errors.log"
 
+DECIMAL_DOT = "<DOT_DECIMAL>"
 
-#with open(OUTPUT_FILE, "a", encoding="utf-8") as f_out:
-#        pass
+def normalize_text(text: str) -> str:
+    if not text:
+        return ""
+    text = text.replace("\n", " ")
+    text = re.sub(r"-\s*\d+\s*-\.?", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
-for filename in sorted(os.listdir(PDF_DIR)):
-    if not filename.endswith(".pdf"):
-        continue
+def protect_decimal_dots(text: str) -> str:
+    return re.sub(r'(?<=\d)\.(?=\d)', DECIMAL_DOT, text)
 
-    pdf_path = os.path.join(PDF_DIR, filename)
+def restore_decimal_dots(text: str) -> str:
+    return text.replace(DECIMAL_DOT, ".")
 
-    full_text = []
+def split_by_dot(text: str):
+    text = protect_decimal_dots(text)
+    parts = re.split(r"\.\s*", text)
 
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text()
-            if text:
-                full_text.append(text)
+    sents = []
+    for p in parts:
+        p = p.strip()
+        if not p:
+            continue
+        p = restore_decimal_dots(p)
+        sents.append(p + ".")
+    return sents
 
-    full_text = "\n".join(full_text)
+def log_error(msg: str):
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(msg + "\n")
 
-    
-    with open(OUTPUT_FILE, "a", encoding="utf-8") as f_out:
+# 로그 초기화(선택)
+with open(LOG_FILE, "w", encoding="utf-8") as f:
+    f.write("")
+
+with open(OUTPUT_FILE, "w", encoding="utf-8") as f_out:
+    for filename in sorted(os.listdir(PDF_DIR)):
+        if not filename.endswith(".pdf"):
+            continue
+
+        pdf_path = os.path.join(PDF_DIR, filename)
+        pages = []
+
+        try:
+            with pdfplumber.open(pdf_path) as pdf:
+                for pi, page in enumerate(pdf.pages, start=1):
+                    try:
+                        t = page.extract_text()  
+                        if t:
+                            pages.append(t)
+                    except KeyboardInterrupt:
+                        msg = f"[SKIP PAGE] {filename} page={pi} (KeyboardInterrupt)"
+                        print(msg)
+                        log_error(msg)
+                        continue
+                    except Exception as e:
+                        msg = f"[SKIP PAGE] {filename} page={pi} error={repr(e)}"
+                        print(msg)
+                        log_error(msg)
+                        continue
+
+        except KeyboardInterrupt:
+            msg = f"[SKIP FILE] {filename} (KeyboardInterrupt while opening/iterating)"
+            print(msg)
+            log_error(msg)
+            continue
+        except Exception as e:
+            msg = f"[SKIP FILE] {filename} error={repr(e)}"
+            print(msg)
+            log_error(msg)
+            continue
+
+        raw_text = " ".join(pages)
+        clean_text = normalize_text(raw_text)
+        sentences = split_by_dot(clean_text)
+
         f_out.write(f"---{filename}---\n")
-        f_out.write(full_text + "\n\n")
+        f_out.write("\n".join(sentences))
+        f_out.write("\n\n")
+
+print("완료:", OUTPUT_FILE)
