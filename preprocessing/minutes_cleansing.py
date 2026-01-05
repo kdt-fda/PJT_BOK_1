@@ -4,6 +4,35 @@ import pandas as pd
 
 RAW_TXT_PATH = "./minutes_text.txt"
 
+NOISE_PATTERNS = [
+    r'\(\s*[가-힣]\s*\)',
+    r'국내외\s+경제동향\s+과\s+관련하여\s*(먼저)?',
+    r'외환\s+국제금융\s+및\s+금융시장\s+동향\s+과\s+관련하여',
+    r'일부[\s,·]*위원(?:은|들은)',
+    r'다른[\s,·]*일부[\s,·]*위원(?:은|들은)',
+    r'또[\s,·]*다른[\s,·]*일부[\s,·]*위원(?:은|들은)',
+    r'위원들은',                    
+    r'위원은',
+    r'이에\s+대해\s+관련\s+부서는',
+    r'(한편|또한|아울러|이어서)\s+동\s+위원은',
+    r'동\s+위원은',
+    r'이어서\s+동\s+위원은',
+    r'또한\s+동\s+위원은',
+    r'아울러\s+동\s+위원은',
+    r'먼저[\s,·]*위원[\s,·]*간',
+    r'질의하였음',
+    r'답변하였음',
+    r'언급하였음',
+    r'견해를\s+밝혔음',
+    r'당부하였음',
+]
+def remove_discourse_noises(sent: str) -> str:
+    if not sent:
+        return ""
+    for pat in NOISE_PATTERNS:
+        sent = re.sub(pat, " ", sent)
+    sent = re.sub(r"\s+", " ", sent).strip()
+    return sent
 
 def remove_numbers_symbols(text: str) -> str:
     if text is None:
@@ -77,10 +106,7 @@ DECISION_RE = re.compile(
 )
 
 def split_minutes_by_sentences(sentences):
-    """
-    sentences: 한 회차(한 pdf)에서 추출된 '문장 줄' 리스트
-    return: dict {META:[...], BODY:[...], DECISION:[...], APPENDIX:[...]}
-    """
+   
     sections = {"META": [], "BODY": [], "DECISION": [], "APPENDIX": []}
 
     state = "META"
@@ -124,14 +150,7 @@ def split_minutes_by_sentences(sentences):
 HEADER_RE = re.compile(r"^---\s*\d{4}\.\d{2}\.\d{2}_.+?---$")
 
 def load_docs_from_minutes_txt(path: str):
-    """
-    return: list of dict
-      [{
-        header: str,
-        release_date: str,
-        sentences: [str, ...]
-      }, ...]
-    """
+ 
     docs = []
     current_header = None
     buf = []
@@ -167,7 +186,6 @@ def load_docs_from_minutes_txt(path: str):
 docs = load_docs_from_minutes_txt(RAW_TXT_PATH)
 
 rows_list_json = []   # 팀규칙 형태를 유지(문장 리스트를 json 문자열로)
-rows_exploded = []    
 
 for doc in docs:
     release_date = doc["release_date"]
@@ -177,8 +195,13 @@ for doc in docs:
 
     # 섹션별로 문장 클렌징(문장단위)
     for sec, sents in sections.items():
-        cleaned_sents = [remove_numbers_symbols(s) for s in sents]
-        cleaned_sents = [s for s in cleaned_sents if s]  # 비어있으면 제거
+        cleaned_sents = []
+        for s in sents:
+            s = remove_discourse_noises(s)     # ① 담화 노이즈 제거
+            s = remove_numbers_symbols(s)      # ② 기호/숫자 제거
+            if s:
+                cleaned_sents.append(s)
+
 
         # 팀규칙: [date, [sent1, sent2...]]
         rows_list_json.append({
@@ -220,3 +243,4 @@ df_body.to_csv(
     index=False,
     encoding="utf-8-sig"
 )
+
