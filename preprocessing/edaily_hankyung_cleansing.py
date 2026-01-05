@@ -28,7 +28,7 @@ def clean_text(text):
         text = re.sub(pattern, '', text)
     
     # 특수기호 제거 (분석에 필요한 문장부호 .,?! 만 남김)
-    text = re.sub(r'[^가-힣a-zA-Z0-9\s.,?!]', ' ', text)
+    text = re.sub(r'[^가-힣a-zA-Z0-9\s.,?!%]', ' ', text)
     
     # 불필요한 연속된 공백 정리
     text = re.sub(r'\s+', ' ', text)
