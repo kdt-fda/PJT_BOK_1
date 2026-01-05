@@ -51,9 +51,9 @@ def length_filtering(file_name, output_name, min_length):
         # min_length 미만 필터링
         df['full_text'] = df['full_text'].str.strip()
         
-        # 1. 길이 필터링 수행
+        # 길이 필터링 수행
         len_condition = df['full_text'].str.len() >= min_length
-        # 2. '금리' 키워드 포함 필터링 수행
+        # '금리' 키워드 포함 필터링 수행
         keyword_condition = df['full_text'].str.contains('금리', na=False)
         
         # 최종 필터링 적용
