@@ -23,6 +23,25 @@ df_sent = (
 df_sent["sentence"] = df_sent["sentence"].str.strip()
 df_sent = df_sent[df_sent["sentence"] != ""]
 
+# 클렌징 작업 후 csv 저장
+SAVE_PATH = "./preprocessing/minutes_filtered.csv"
+
+cols_to_save = [
+    "meeting_date",
+    "release_date",
+    "text_type",
+    "sentence"
+]
+
+df_sent[cols_to_save].to_csv(
+    SAVE_PATH,
+    index=False,
+    encoding="utf-8-sig"
+)
+
+print(df_sent[cols_to_save].head())
+
+
 negation_words = {"않", "못", "아니"}
 
 def tokenize_ekonlpy(text):
