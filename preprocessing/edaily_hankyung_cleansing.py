@@ -79,5 +79,5 @@ def length_filtering(file_name, output_name, min_length):
         print(f"오류: {file_name} 파일을 찾을 수 없습니다.\n")
         return None
 
-df_edaily = length_filtering('edaily_news_all.csv', 'edaily_news_all_filtered.csv', 150)
-df_hankyung = length_filtering('hankyung_news_all.csv', 'hankyung_news_all_filtered.csv', 150)
+df_edaily = length_filtering('edaily_news_all_crawl.csv', 'edaily_news_all_cleansing.csv', 150)
+df_hankyung = length_filtering('hankyung_news_all_crawl.csv', 'hankyung_news_all_cleansing.csv', 150)
