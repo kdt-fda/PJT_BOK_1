@@ -84,9 +84,6 @@ META_STOP = {
     "등/NNG", "및/NNG"
 }
 
-DROP_UNIGRAM = True
-
-
 def loads(cell):
     if pd.isna(cell) or not str(cell).strip():
         return []
@@ -94,13 +91,15 @@ def loads(cell):
 
 def is_contiguous_subseq(short, long):
     s, L = len(short), len(long)
+    if s > L:
+        return False
     for i in range(L - s + 1):
         if long[i:i+s] == short:
             return True
     return False
 
 def has_nng(ng):
-    return any(tok.endswith("/NNG") for tok in ng.split(";"))
+    return any(tok.endswith("/NNG") for tok in str(ng).split(";"))
 
 def keep_highest_only(ngrams):
     uniq = {}
@@ -109,15 +108,17 @@ def keep_highest_only(ngrams):
         parts = [p for p in ng.split(";") if p]
         if parts:
             uniq[ng] = parts
+
     items = sorted(uniq.items(), key=lambda x: len(x[1]), reverse=True)
+
     kept, kept_parts = [], []
     for ng, parts in items:
         if any(is_contiguous_subseq(parts, kp) for kp in kept_parts):
             continue
         kept.append(ng)
         kept_parts.append(parts)
-    return kept
 
+    return kept
 
 df = pd.read_csv(INPUT_PATH, encoding="utf-8-sig")
 docs = df["tokens"].apply(loads)
@@ -132,10 +133,6 @@ for doc in docs:
 
 keep_vocab = {ng for ng, c in global_freq.items() if c >= MIN_FREQ}
 keep_vocab -= META_STOP
-
-if DROP_UNIGRAM:
-    keep_vocab = {ng for ng in keep_vocab if ";" in ng}
-
 keep_vocab = {ng for ng in keep_vocab if has_nng(ng)}
 
 selected_docs = []
@@ -164,3 +161,4 @@ df_out.to_csv(
 
 print("문서 수:", len(df_out))
 print("선정 vocab 크기:", len(keep_vocab))
+
