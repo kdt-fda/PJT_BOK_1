@@ -113,7 +113,7 @@ labels[score > INTENSITY] = "hawkish"
 labels[score < 1.0/INTENSITY] = "dovish"
 
 lex = pd.DataFrame({
-    "ngram": model_vocab,
+    "lexicon": model_vocab,
     "polarity_score": score,
     "label": labels
 })
@@ -124,3 +124,4 @@ print("dovish :", (lex_final["label"]=="dovish").sum())
 print("total  :", len(lex_final))
 
 lex_final.to_csv("lexicon_lexical_minutes.csv", index=False, encoding="utf-8-sig")
+
