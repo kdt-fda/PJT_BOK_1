@@ -125,3 +125,91 @@ print("total  :", len(lex_final))
 
 lex_final.to_csv("lexicon_lexical_minutes.csv", index=False, encoding="utf-8-sig")
 
+
+import json
+import numpy as np
+import pandas as pd
+
+MINUTES_PATH = "minutes_ngramize.csv"
+LEXICON_PATH = "lexicon_lexical_minutes.csv"   # lexicon, polarity_score, label
+OUT_PATH = "lexical_tone_index_minutes.csv"
+
+
+minutes = pd.read_csv(MINUTES_PATH, encoding="utf-8-sig")[["release_date", "ngrams"]].copy()
+minutes["release_date"] = pd.to_datetime(minutes["release_date"], errors="coerce")
+
+def loads_tokens(x):
+    if pd.isna(x) or not str(x).strip():
+        return []
+    obj = json.loads(x)
+    toks = []
+    for sent in obj:
+        if isinstance(sent, list):
+            for t in sent:
+                t = str(t).strip().strip('"').rstrip(";")
+                if t:
+                    toks.append(t)
+    return toks
+
+minutes["tokens"] = minutes["ngrams"].apply(loads_tokens)
+
+
+lex = pd.read_csv(LEXICON_PATH, encoding="utf-8-sig")[["lexicon", "polarity_score", "label"]].copy()
+lex["polarity_score"] = pd.to_numeric(lex["polarity_score"], errors="coerce")
+lex["label"] = lex["label"].astype(str).str.lower().str.strip()
+
+# hawkish/dovish만 사용 (neutral은 제외)
+lex = lex[lex["label"].isin(["hawkish", "dovish"])].dropna(subset=["polarity_score"])
+
+# 부호 적용
+lex["signed_score"] = np.where(lex["label"] == "hawkish", lex["polarity_score"], -lex["polarity_score"])
+
+score_map = dict(zip(lex["lexicon"], lex["signed_score"]))
+
+# 문서별 tone index 계산
+def doc_tone_avg(tokens, score_map):
+    s = 0.0
+    m = 0
+    for t in tokens:
+        sc = score_map.get(t)
+        if sc is None:
+            continue
+        s += float(sc)
+        m += 1
+    return (s / m) if m > 0 else np.nan, m
+
+def doc_tone_posneg(tokens, score_map):
+    P = 0
+    N = 0
+    for t in tokens:
+        sc = score_map.get(t)
+        if sc is None:
+            continue
+        if sc > 0:
+            P += 1
+        elif sc < 0:
+            N += 1
+    return (P - N) / (P + N) if (P + N) > 0 else np.nan, (P + N)
+
+tone_avg, tone_pn, match_cnt, match_cnt_pn = [], [], [], []
+
+for toks in minutes["tokens"]:
+    a, m = doc_tone_avg(toks, score_map)
+    b, m2 = doc_tone_posneg(toks, score_map)
+    tone_avg.append(a)
+    tone_pn.append(b)
+    match_cnt.append(m)
+    match_cnt_pn.append(m2)
+
+out = pd.DataFrame({
+    "release_date": minutes["release_date"],
+    "lex_tone_avg": tone_avg,
+    "lex_tone_posneg": tone_pn,
+    "lex_match_count": match_cnt,
+    "lex_match_count_posneg": match_cnt_pn,
+    "doc_token_count": minutes["tokens"].apply(len),
+}).sort_values("release_date")
+
+out.to_csv(OUT_PATH, index=False, encoding="utf-8-sig")
+print("Saved:", OUT_PATH)
+print(out.tail(5))
