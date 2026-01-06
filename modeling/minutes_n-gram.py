@@ -1,107 +1,58 @@
-import ast
-import json
+import json, csv
 import pandas as pd
-from collections import Counter
-
-INPUT_CSV = "minutes_tokens.csv"
-OUTPUT_CSV = "minutes_ngrams.csv"
-
-MAX_N = 5
-MIN_FREQ = 15
-
-meta_stop = {
-    "이_대해","이어서_동위원","또_일부위원","아울러_동위원","이_관련",
-    "답변","이_동위원","과_같","있","다","있_것","있_점","나타내","한편_일부위원",
-    "수_있","필요_있",
-    "있_의견","있_견해","있_언급","있_답변",
-    "것_이","것_보인다고","것_예상","것_판단",
-    "보이_있","물_이",
-    "대해_관련부서"
-}
-
-# tokens 파싱 + flatten
-def parse_tokens_cell(x):
-    """
-    CSV에서 읽은 tokens가
-    - 이미 list면 그대로
-    - 문자열이면 ast.literal_eval로 list로 변환
-    """
-    if x is None or (isinstance(x, float) and pd.isna(x)):
-        return []
-    if isinstance(x, list):
-        return x
-    if isinstance(x, str):
-        x = x.strip()
-        if not x:
-            return []
-        try:
-            return ast.literal_eval(x)
-        except Exception:
-            # 파싱 실패하면 빈 리스트로 처리
-            return []
-    return []
-
-def flatten_tokens(tok):
-    """
-    tok가
-    - [[...],[...]] (문장별 토큰) 이면 flatten해서 1차원으로
-    - [...] (이미 1차원) 이면 그대로
-    """
-    if not tok:
-        return []
-    if isinstance(tok, list) and len(tok) > 0 and isinstance(tok[0], list):
-        out = []
-        for sent_tokens in tok:
-            out.extend(sent_tokens)
-        return out
-    return tok
-
-# n-gram 생성 함수
-def keep_longest(tokens, max_n=5):
-    """
-    논문 규칙에 가까움:
-    - 각 위치에서 가능한 최대 n-gram(최장)만 남김
-    - i는 최장 길이만큼 점프
-    - 최장이 1이면 1-gram이 자연스럽게 포함됨
-    """
-    L = len(tokens)
-    out = []
-    i = 0
-    while i < L:
-        n = min(max_n, L - i)  # 남은 길이 내 최장
-        out.append("_".join(tokens[i:i+n]))
-        i += n
-    return out
+from tqdm import tqdm
+from ekonlpy.sentiment import MPCK
+mpck = MPCK()
 
 
+def ngramize(tokens, max_n=5):
+    keep_tags = {'NNG', 'VV', 'VA', 'MAG'}
+    filtered = [w for w in tokens if w.split('/')[-1] in keep_tags]
 
-df = pd.read_csv(INPUT_CSV, encoding="utf-8-sig")
+    ngram_results = []
+    L = len(filtered)
+    for pos in range(L):
+        for n in range(1, max_n + 1):
+            end = pos + n
+            if end <= L:
+                ngram_results.append(";".join(filtered[pos:end]))
+    return ngram_results
 
-# tokens 컬럼 파싱
-df["tokens"] = df["tokens"].apply(parse_tokens_cell)
-df["tokens_flat"] = df["tokens"].apply(flatten_tokens)
 
-# ngram 생성
-df["ngrams_raw"] = df["tokens_flat"].apply(lambda t: keep_longest_plus_bigram(t, max_n=MAX_N))
+df_src = pd.read_csv("minutes_filtered.csv", encoding="utf-8-sig")
 
-# 전체 빈도 기반 필터
-all_ngrams = df["ngrams_raw"].explode().dropna()
-ngram_counts = Counter(all_ngrams)
+results = []
 
-valid_ngrams = {g for g, c in ngram_counts.items() if c >= MIN_FREQ}
-df["ngrams"] = df["ngrams_raw"].apply(lambda gs: [g for g in gs if g in valid_ngrams])
+for _, row in df_src.iterrows():
+    try:
+        release_date = row["release_date"]
+        text = row["sentences"]
 
-# meta_stop 제거
-df["ngrams"] = df["ngrams"].apply(lambda gs: [g for g in gs if g not in meta_stop])
+        if pd.isna(text) or not str(text).strip():
+            continue
 
-# 저장: release_date + ngrams(리스트만 JSON 문자열로)
-out = df[["release_date", "ngrams"]].copy()
-out["ngrams"] = out["ngrams"].apply(lambda x: json.dumps(x, ensure_ascii=False))
+        # 형태소 분석
+        tokens = mpck.tokenize(text)
 
-out.to_csv(OUTPUT_CSV, index=False, encoding="utf-8-sig")
+        # n-gram 생성
+        ngrams = ngramize(tokens, max_n=5)
 
-# 체크
-final_counts = Counter(df["ngrams"].explode().dropna())
-print("saved:", OUTPUT_CSV)
-print("최종 ngram vocab size:", len(final_counts))
-print("상위 20개:", final_counts.most_common(20))
+        results.append({
+            "release_date": release_date,
+            "tokens": json.dumps(ngrams, ensure_ascii=False),
+            "category": "의사록",
+        })
+
+    except Exception as e:
+        print(f"{release_date} 처리 중 에러: {e}")
+
+
+df_out = pd.DataFrame(results)
+
+output_path = "minutes_tokenize.csv"
+df_out.to_csv(
+    output_path,
+    index=False,
+    encoding="utf-8-sig",
+    quoting=csv.QUOTE_ALL
+)
