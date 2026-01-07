@@ -88,3 +88,12 @@ beautifulsoup4
 requests
 kss
 """
+
+
+seeds_h = ['높/VA','팽창/NNG','인상/NNG','매파/NNG','성장/NNG','투기/NNG';'억제/NNG','상승/NNG','인플레이션/NNG';'압력/NNG','증가/NNG','위험/NNG';'선호/NNG','상회/NNG','물가/NNG';'상승/NNG','과열/NNG','금리/NNG';'상승/NNG','확장/NNG','상방/NNG';'압력/NNG','긴축/NNG','변동성/NNG';'감소/NNG','흑자/NNG','채권/NNG';'가격/NNG';'하락/NNG','견조/NNG','요금/NNG';'인상/NNG','낙관/NNG','부동산/NNG';'가격/NNG';'상승/NNG','상향/NNG']
+
+seeds_d = ['낮/VA','축소/NNG','인하/NNG','비둘기/NNG','둔화/NNG','약화/NNG','하락/NNG','회복/NNG';'못하/VX','감소/NNG','위험/NNG';'회피/NNG','하회/NNG','물가/NNG';'하락/NNG','위축/NNG','금리/NNG';'하락/NNG','침체/NNG','하방/NNG';'압력/NNG','완화/NNG','변동성/NNG';'확대/NNG','적자/NNG','채권/NNG';'가격/NNG';'상승/NNG','부진/NNG','요금/NNG';'인하/NNG','비관/NNG','부동산/NNG';'가격/NNG';'하락/NNG','하향/NNG']
+
+seeds_h = ['낙관/NNG','변동성/NNG','감소/NNG';'위험/NNG','선호/NNG';'매파/NNG','부동산/NNG';'과열/NNG';'억제/NNG','부동산/NNG';'과열/NNG','과열/NNG';'우려/NNG','과열/NNG';'억제/NNG','과열/NNG';'막/VV','경기/NNG';'과열/NNG','부동산/NNG';'과열/NNG';'우려/NNG','경기/NNG';'과열/NNG';'우려/NNG','가격/NNG';'억제/NNG','투자/NNG';'과열/NNG','부동산/NNG';'가격/NNG';'억제/NNG';'경기/NNG','과열/NNG','억제/NNG';'과열/NNG','조정/NNG';'인플레이션/NNG','긴축/NNG';'경기/NNG','과열/NNG','막/VV';'경제/NNG','과열/NNG';'긴축/NNG','압력/NNG';'과열/NNG','방지/NNG']
+
+seeds_d = ['비관/NNG';'요금/NNG','인하/NNG';'적자/NNG';'비둘기/NNG';'둔화/NNG','경기/NNG','침체/NNG';'경기/NNG','침체/NNG','빠지/VV';'약화/NNG','경기/NNG','침체/NNG';'경기/NNG','침체/NNG';'침체/NNG','빠지/VV';'침체/NNG','가능성/NNG','높/VA';'경기/NNG','침체','국면/NNG','빠지/VV';'침체/NNG','경기/NNG','침체/NNG';'둔화/NNG','경기/NNG','침체/NNG';'경기/NNG','침체/NNG','빠지/VV','않/VX';'이미/MAG','침체/NNG';'깊/VA','침체/NNG';'침체/NNG','빠지/VV','우려/NNG';'침체','국면/NNG','빠지/VV';'이미/MAG','경기/NNG','침체/NNG';'침체/NNG','취약/NNG';'경제/NNG','침체/NNG','빠지/VV';'침체/NNG','높/NNG']
