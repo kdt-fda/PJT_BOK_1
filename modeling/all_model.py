@@ -186,13 +186,14 @@ def build_lexical_lexicon(df, n_iterations=50, top_n=3000, filter_top_k=150):
     final_scores = {word: {'h': 0.0, 'd': 0.0} for word in candidate_vocab}
     
     print(f"\n[Lexical Approach] {n_iterations}회 반복 전파(Bootstrapping) 중...")
+    
+    model = Word2Vec(sentences=sentences, vector_size=300, window=5, min_count=15, workers=4, epochs=30)
     for _ in tqdm(range(n_iterations)):
         # 씨앗 단어의 80%를 무작위로 선택 (통계적 안정성 확보하기 위함, 유사도의 정확한 측정용)
         sample_h = np.random.choice(seeds_h, size=max(1, int(len(seeds_h)*0.8)), replace=False)
         sample_d = np.random.choice(seeds_d, size=max(1, int(len(seeds_d)*0.8)), replace=False)
         
         for word in candidate_vocab:
-            # 코사인 유사도 평균 계산 후 지수 함수(exp) 적용 (음수 방지)
             # 논문의 SentProp 확률 전파 개념을 유사도 공간에서 모사한 부분
             sim_h = np.mean([model.wv.similarity(word, s) for s in sample_h])
             sim_d = np.mean([model.wv.similarity(word, s) for s in sample_d])
