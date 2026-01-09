@@ -137,7 +137,6 @@ def build_lexical_lexicon(df, n_iterations=50, top_n=3000, filter_top_k=150):
     sentences = [sent for doc in df['feature_tokens'] for sent in doc] # N-gram 포함 토큰
     print("\n[Lexical Approach] Word2Vec 학습 중...")
     # 벡터 차원 300, 주변 단어 범위 5, 최소 개수 15 (논문 값 그대로 사용)
-    # gensim 버전에 따라 히위 버전은 size=300으로 수정 필요
     model = Word2Vec(sentences=sentences, vector_size=300, window=5, min_count=15, workers=4, epochs=30)
     vocab = model.wv.index_to_key
     
