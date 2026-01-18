@@ -92,7 +92,7 @@ def fit_predict_with_cols(df_daily: pd.DataFrame, X_cols: list[str], model_name:
     X_train = sm.add_constant(train[X_cols], has_constant="add")
     y_train = train[LABEL_COL].astype(float)
 
-    model = sm.OLS(y_train, X_train).fit()
+    model = sm.OLS(y_train, X_train).fit(cov_type='HAC', cov_kwds={'maxlags': 1})
 
     print("\n" + "="*70)
     print(f"[{model_name}] OLS Summary (Train: ~{TRAIN_END})")
